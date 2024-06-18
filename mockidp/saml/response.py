@@ -17,7 +17,7 @@ env = Environment(
 
 
 def saml_timestamp(epoch):
-    return time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(epoch))
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(epoch))
 
 
 env.filters['timestamp'] = saml_timestamp
@@ -94,5 +94,5 @@ def render_logout_response(config, user, session):
 def get_issue_instant(session):
     # session.created is set using time.getTime().
     # But IssueInstant is expected to be in UTC form of ISO-8601 format
-    issue_instant = datetime.datetime.fromtimestamp(session.created).replace(tzinfo=datetime.timezone.utc, microsecond=0).isoformat()
+    issue_instant = datetime.datetime.fromtimestamp(session.created).replace(tzinfo=datetime.timezone.utc, microsecond=0).isoformat().replace('+00:00', 'Z')
     return issue_instant

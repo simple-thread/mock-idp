@@ -23,7 +23,12 @@
     </noscript>
     <form method="POST" action="{{ post_url }}">
         <noscript><input type='submit' value='Submit'/></noscript>
+
         <input type="hidden" name="SAMLResponse" value="{{ saml_response }}">
+        {% if relay_state is not none %}
+            <input type="hidden" name="RelayState" value="{{ relay_state }}">
+        {% endif %}
+        
     </form>
 </body>
 

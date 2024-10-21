@@ -9,6 +9,7 @@ from .request import parse_request
 from .response import create_auth_response, create_logout_response
 
 open_saml_requests = dict()
+relay_state_params = dict()
 conf = None
 
 
@@ -20,10 +21,12 @@ def init(_conf):
 @app.route('/saml', methods=['POST'])
 def begin_login():
     saml_request = flask.request.form['SAMLRequest']
+    relay_state = flask.request.form.get("RelayState", None)
     req = parse_request(saml_request)
 
     logging.info("Storing request %s", req.id)
     open_saml_requests[req.id] = req
+    relay_state_params[req.id] = relay_state
 
     response = flask.make_response(flask.redirect("/saml/login", code=302))
     response.set_cookie('mockidp_request_id', value=req.id)
@@ -33,6 +36,7 @@ def begin_login():
 @app.route('/saml', methods=['GET'])
 def begin_login_get():
     saml_request = flask.request.args['SAMLRequest']
+    relay_state = flask.request.args.get("RelayState", None)
     logging.info("Got saml_request %s", saml_request)
 
     req = parse_request(saml_request)
@@ -40,6 +44,7 @@ def begin_login_get():
 
     logging.info("Storing request %s", req.id)
     open_saml_requests[req.id] = req
+    relay_state_params[req.id] = relay_state
 
     response = flask.make_response(flask.redirect("/saml/login", code=302))
     response.set_cookie('mockidp_request_id', value=req.id)
@@ -62,9 +67,10 @@ def authenticate():
         if saml_req_id not in open_saml_requests:
             return '404: Missing login session', 404
         saml_request = open_saml_requests[saml_req_id]
+        relay_state = relay_state_params[saml_req_id]
         session = get_session(user, saml_request)
         url, saml_response = create_auth_response(conf, session)
-        return flask.render_template('auth_response.html', post_url=url, saml_response=saml_response)
+        return flask.render_template('auth_response.html', post_url=url, saml_response=saml_response, relay_state=relay_state)
     else:
         flask.flash(f"Incorrect username or password {username}")
         return flask.redirect("/saml/login", code=302)

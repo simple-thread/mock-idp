@@ -2,7 +2,7 @@
 import logging
 import yaml
 import os
-import pkg_resources
+from importlib.resources import files
 
 LOCAL_CONFIG = "{}/mockidp.yaml".format(os.path.curdir)
 HOME_DIR_CONFIG = "{}/.mockidp.yaml".format(os.path.expanduser("~"))
@@ -10,7 +10,7 @@ GLOBAL_CONFIG = "/etc/mockidp.yaml"
 
 
 def locate_config_file():
-    """ Return a path to a config to use accoding to standard preference rules """
+    """Return a path to a config to use accoding to standard preference rules"""
 
     logging.info("Checking if %s is a file", LOCAL_CONFIG)
     if os.path.isfile(LOCAL_CONFIG):
@@ -19,8 +19,13 @@ def locate_config_file():
         return HOME_DIR_CONFIG
     if os.path.isfile(GLOBAL_CONFIG):
         return GLOBAL_CONFIG
-    resource = pkg_resources.resource_filename('mockidp', 'resources/default_config.yaml')
-    return resource
+
+    # Package default (works from wheel/zip installs too)
+    default_config = files("mockidp").joinpath("resources/default_config.yaml")
+
+    # If callers expect a real filesystem path, materialize it
+    with default_config.as_file() as p:
+        return str(p)
 
 
 def parse_config(filename):
@@ -30,10 +35,12 @@ def parse_config(filename):
 
 
 def get_service_provider(config, name):
-    service_providers = config['service_providers']
+    service_providers = config["service_providers"]
     if type(service_providers) != list:
         raise Exception(f"Unexpected obj {service_providers}")
-    matches = list(filter(lambda x: x['name'] == name, service_providers))
+    matches = list(filter(lambda x: x["name"] == name, service_providers))
     if len(matches) != 1:
-        raise Exception(f"Unable to locate service provider {name}, available {service_providers}")
+        raise Exception(
+            f"Unable to locate service provider {name}, available {service_providers}"
+        )
     return matches[0]

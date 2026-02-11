@@ -2,7 +2,7 @@
 import base64
 import time
 import datetime
-from importlib.resources import files
+from importlib.resources import files, as_file
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 from lxml import etree
@@ -25,7 +25,7 @@ env.filters["timestamp"] = saml_timestamp
 
 def read_bytes(path: str) -> bytes:
     resource = files("mockidp").joinpath(path)
-    with resource.as_file() as p:
+    with as_file(resource) as p:
         return p.read_bytes()
 
 

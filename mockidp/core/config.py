@@ -2,7 +2,7 @@
 import logging
 import yaml
 import os
-from importlib.resources import files
+from importlib.resources import files, as_file
 
 LOCAL_CONFIG = "{}/mockidp.yaml".format(os.path.curdir)
 HOME_DIR_CONFIG = "{}/.mockidp.yaml".format(os.path.expanduser("~"))
@@ -24,7 +24,7 @@ def locate_config_file():
     default_config = files("mockidp").joinpath("resources/default_config.yaml")
 
     # If callers expect a real filesystem path, materialize it
-    with default_config.as_file() as p:
+    with as_file(default_config) as p:
         return str(p)
 
 
